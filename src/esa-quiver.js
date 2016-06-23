@@ -8,12 +8,12 @@ export default class EsaQuiver {
 			team: config.esaTeam,
 			accessToken: config.esaToken
 		});
-		this.qv = QuiverBook.open(config.quiverDir);
+		this.book = QuiverBook.open(config.quiverDir);
 	}
 
 	static init(config) {
 		const esaQuiver = new EsaQuiver(config);
-		if (esaQuiver.qv && config.esaTeam && config.esaToken) {
+		if (esaQuiver.book && config.esaTeam && config.esaToken) {
 			return esaQuiver;
 		} else {
 			return null;
@@ -23,7 +23,7 @@ export default class EsaQuiver {
 	fetch() {
 		this.esa.api.posts({per_page: 1, page: 1}, (err, res) => {
 			console.log(res.body);
-			const note = this.qv.addNote('test');
+			const note = this.book.addNote('test');
 			if (note) { 
 				note.setTitle("Hi everyone");
 				note.setBody("body test");
