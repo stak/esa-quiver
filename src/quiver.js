@@ -30,7 +30,7 @@ class QuiverNote {
 			const content = fs.readFileSync(contentFile, 'utf-8');
 			const esa = fs.readFileSync(esaFile, 'utf-8');
 
-			this.meta = JSON.parse(data);
+			this.meta = JSON.parse(meta);
 			this.content = JSON.parse(content);
 			this.esa = JSON.parse(esa);
 		} catch (e) {
