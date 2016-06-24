@@ -29,6 +29,7 @@
     "babel-preset-es2015": "^6.9.0"
   },
   "dependencies": {
+    "del": "^2.2.1",
     "esa-nodejs": "0.0.7"
   }
 }

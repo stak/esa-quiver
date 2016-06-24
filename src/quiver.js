@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const del = require('del');
 
 const FILE_META = 'meta.json';
 const FILE_CONTENT = 'content.json';
@@ -134,6 +135,11 @@ class QuiverNote {
 			console.log(e);
 			return false;
 		}
+	}
+
+	remove() {
+		const noteDir = path.join(this.book.dir, this.meta.uuid + '.' + QUIVER_NOTE_EXTENSION);
+		del.sync(noteDir, {force: true});
 	}
 }
 
