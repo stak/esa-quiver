@@ -3,7 +3,8 @@ import EsaQuiver from './esa-quiver';
 const config = {
 	esaTeam: process.env['ESA_CURRENT_TEAM'],
 	esaToken: process.env['ESA_ACCESS_TOKEN'],
-	quiverDir: process.env['QUIVER_NOTEBOOK_DIR']
+	quiverDir: process.env['QUIVER_NOTEBOOK_DIR'],
+	tagPrefix: ''
 };
 
 const app = EsaQuiver.init(config);
