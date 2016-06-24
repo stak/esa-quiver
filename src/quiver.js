@@ -3,6 +3,7 @@ const path = require('path');
 
 const FILE_META = 'meta.json';
 const FILE_CONTENT = 'content.json';
+const FILE_ESA = 'esa.json';
 const QUIVER_NOTE_EXTENSION = ".qvnote";
 const QUIVER_BOOK_EXTENSION = ".qvnotebook";
 
@@ -22,27 +23,31 @@ class QuiverNote {
 		const noteDir = path.join(this.book.dir, uuid + QUIVER_NOTE_EXTENSION);
 		const metaFile = path.join(noteDir, FILE_META);
 		const contentFile = path.join(noteDir, FILE_CONTENT);
+		const esaFile = path.join(noteDir, FILE_ESA);
 
 		try {
 			const meta = fs.readFileSync(metaFile, 'utf-8');
 			const content = fs.readFileSync(contentFile, 'utf-8');
+			const esa = fs.readFileSync(esaFile, 'utf-8');
 
 			this.meta = JSON.parse(data);
 			this.content = JSON.parse(content);
+			this.esa = JSON.parse(esa);
 		} catch (e) {
 			this.meta = null;
 			this.content = null;
+			this.esa = null;
 		}
 	}
 
 	static open(book, uuid) {
 		const note = new QuiverNote(book, uuid);
-		return note.meta ? note : null;
+		return note.esa ? note : null;
 	}
 
 	static create(book, uuid) {
 		const note = new QuiverNote(book, uuid);
-		if (note.meta) throw new Error('Note already exists');
+		if (note.esa) throw new Error('Note already exists');
 
 		note.meta = {
 			created_at: Date.now() / 1000 | 0,
@@ -58,6 +63,7 @@ class QuiverNote {
 				data: ''
 			}]
 		};
+		note.esa = null;
 
 		if (!note.save(true)) {
 			throw new Error('Failed to create the note dir.');
@@ -87,20 +93,33 @@ class QuiverNote {
 		return true;
 	}
 
+	setEsa(esa) {
+		if (typeof esa !== 'object') return false;
+		this.esa = esa;
+		this.meta.created_at = Date.parse(esa.created_at) / 1000 | 0;
+		this.meta.updated_at = Date.parse(esa.updated_at) / 1000 | 0;
+		return true;
+	}
+
 	save(makeDir = false) {
 		const noteDir = path.join(this.book.dir, this.meta.uuid + QUIVER_NOTE_EXTENSION);
 		const metaFile = path.join(noteDir, FILE_META);
 		const contentFile = path.join(noteDir, FILE_CONTENT);
+		const esaFile = path.join(noteDir, FILE_ESA);
 
 		try {
 			const metaJson = JSON.stringify(this.meta, null, '  ');
 			const contentJson = JSON.stringify(this.content, null, '  ');
+			const esaJson = JSON.stringify(this.esa, null, '  ');
 
 			if (makeDir) {
 				fs.mkdirSync(noteDir);
 			}
 			fs.writeFileSync(metaFile, metaJson, 'utf-8');
 			fs.writeFileSync(contentFile, contentJson, 'utf-8');
+			if (this.esa) {
+				fs.writeFileSync(esaFile, esaJson, 'utf-8');
+			}
 			return true;
 		} catch (e) {
 			console.log(e);
