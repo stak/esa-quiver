@@ -4,8 +4,8 @@
   "description": "Synchronize esa.io posts to Quiver notebooks",
   "main": "lib/index.js",
   "scripts": {
-    "build": "babel src -d lib",
-    "watch": "babel src -d lib --watch",
+    "build": "babel src -d lib --source-maps",
+    "watch": "babel src -d lib --watch --source-maps",
     "prepublish": "npm run --if-present build",
     "test": "mocha"
   },
