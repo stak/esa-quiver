@@ -74,7 +74,59 @@ export default class EsaQuiver {
 	}
 
 	push() {
+		const promises = [];
 
+		this.book.getAllNotes().forEach(note => {
+			const titleObj = this.splitNoteTitle_(note.meta.title);
+			const params = {
+				post: {
+					name: titleObj.name,
+					tags: titleObj.tags,
+					category: titleObj.category,
+					body_md: note.content.cells[0].data,
+					wip: note.meta.tags.some(tag => tag === this.tagPrefix + '@' + ESA_TAG_ATTR_WIP),
+					message: 'Updated by Quiver'
+				}
+			};
+
+			if (note.esa) {
+				const esaTime = Date.parse(note.esa.updated_at) / 1000 | 0;
+				const metaTime = note.meta.updated_at;
+				if (esaTime !== metaTime) {
+					params.post.original_revision = {
+						body_md: note.esa.body_md,
+						number: note.esa.number,
+						user: note.esa.updated_by.screen_name
+					};
+					promises.push(new Promise((resolve, reject) => {
+						this.esa.api.updatePost(note.esa.number, params, (err, res) => {
+							if (err) return reject(err);
+							resolve(res);
+						});
+					}));
+				}
+			} else {
+				promises.push(new Promise((resolve, reject) => {
+					this.esa.api.createPost(params, (err, res) => {
+						if (err) return reject(err);
+						resolve(res);
+					});
+				}));
+			}
+		});
+
+		return new Promise((resolve, reject) => {
+			Promise.all(promises).then(results => {
+				results.forEach(res => {
+					if (this.postToNote_(res.body)) {
+						console.log(`Push: ${res.body.full_name}`);
+					} else {
+						console.log(`Error: ${res.body.full_name}`);
+					}
+				});
+				resolve();
+			}).catch(reject);
+		});
 	}
 
 	constructNoteTags_(post) {
@@ -97,6 +149,20 @@ export default class EsaQuiver {
 		}
 
 		return tags;
+	}
+
+	splitNoteTitle_(titleString) {
+		const categoryPart = titleString.split('/');
+		const category = categoryPart.slice(0, -1).join('/');
+		let tagPart = (" " + categoryPart.pop()).split(/\s+#/);
+		const name = tagPart.shift().trim();
+		tagPart = tagPart.map(tag => tag.split(/\s+/)[0]);
+
+		return {
+			name: name,
+			category: category,
+			tags: tagPart
+		};
 	}
 
 	postToNote_(post) {
