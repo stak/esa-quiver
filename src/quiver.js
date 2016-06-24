@@ -92,9 +92,6 @@ class QuiverNote {
 		const metaFile = path.join(noteDir, FILE_META);
 		const contentFile = path.join(noteDir, FILE_CONTENT);
 
-		const oldUpdateTime = this.meta.updated_at;
-		this.meta.updated_at = Date.now() / 1000 | 0;
-
 		try {
 			const metaJson = JSON.stringify(this.meta, null, '  ');
 			const contentJson = JSON.stringify(this.content, null, '  ');
@@ -107,7 +104,6 @@ class QuiverNote {
 			return true;
 		} catch (e) {
 			console.log(e);
-			this.meta.updated_at = oldUpdateTime;
 			return false;
 		}
 	}
