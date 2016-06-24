@@ -135,7 +135,13 @@ export default class EsaQuiver {
 
 	constructNoteTags_(post) {
 		let tag = this.tagPrefix;
-		let tags = [tag];
+		let tags = [];
+
+		if (tag) {
+			tags.push(tag);
+		} else {
+			tags.push('/');
+		}
 
 		if (post.category) {
 			// 'a/b/c' => ['a', 'a/b', 'a/b/c']
