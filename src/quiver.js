@@ -165,7 +165,12 @@ export default class QuiverBook {
 	}
 
 	getAllNotes() {
+		const files = fs.readdirSync(this.dir);
+		const noteUuids = files.filter(file => file.split('.').pop() === QUIVER_NOTE_EXTENSION)
+		                       .map(file => file.split('.').shift());
+		const notes = noteUuids.map(uuid => QuiverNote.open(this, uuid));
 
+		return notes;
 	}
 
 	addNote(noteUuid) {
