@@ -13,4 +13,16 @@ if (!app) {
 	process.exit(1);
 }
 
-app.fetch().then(() => console.log('DONE'));
+// app.fetch().then(() => console.log('DONE'));
+
+app.push().then(() => {
+	console.log("DONE");
+}).catch((err) => {
+	console.log("ERR");
+});
+
+/*
+console.log(app.splitNoteTitle_("hoge/img/page #what #is #this"));
+console.log(app.splitNoteTitle_("hoge/img/page #img /#slash"));
+console.log(app.splitNoteTitle_("dir/hoge/abe no haru #kasu #desu a a"));
+*/
