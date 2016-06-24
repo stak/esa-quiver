@@ -123,9 +123,11 @@ export default class QuiverBook {
 			const data = fs.readFileSync(metaFile, 'utf-8');
 			const meta = JSON.parse(data);
 			this.name = meta.name;
+			this.uuid = meta.uuid;
 		} catch (e) {
 			this.dir = null;
 			this.name = null;
+			this.uuid = null;
 		}
 	}
 
