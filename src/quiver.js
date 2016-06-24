@@ -28,26 +28,30 @@ class QuiverNote {
 		try {
 			const meta = fs.readFileSync(metaFile, 'utf-8');
 			const content = fs.readFileSync(contentFile, 'utf-8');
-			const esa = fs.readFileSync(esaFile, 'utf-8');
 
 			this.meta = JSON.parse(meta);
 			this.content = JSON.parse(content);
-			this.esa = JSON.parse(esa);
 		} catch (e) {
 			this.meta = null;
 			this.content = null;
+		}
+
+		try {
+			const esa = fs.readFileSync(esaFile, 'utf-8');
+			this.esa = JSON.parse(esa);
+		} catch (e) {
 			this.esa = null;
 		}
 	}
 
 	static open(book, uuid) {
 		const note = new QuiverNote(book, uuid);
-		return note.esa ? note : null;
+		return note.meta ? note : null;
 	}
 
 	static create(book, uuid) {
 		const note = new QuiverNote(book, uuid);
-		if (note.esa) throw new Error('Note already exists');
+		if (note.meta) throw new Error('Note already exists');
 
 		// templates
 		note.meta = {
