@@ -179,6 +179,10 @@ export default class EsaQuiver {
 		let tagPart = (" " + categoryPart.pop()).split(/\s+#/);
 		const name = tagPart.shift().trim();
 		tagPart = tagPart.map(tag => tag.split(/\s+/)[0]);
+		if (tagPart.length === 0) {
+			// esa api v1 require [""] to remove all tags
+			tagPart = [""];
+		}
 
 		return {
 			name: name,
