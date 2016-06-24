@@ -141,7 +141,9 @@ export default class EsaQuiver {
 			});
 		}
 
-		// TODO: post.tags
+		if (post.tags instanceof Array) {
+			tags = tags.concat(post.tags);
+		}
 
 		if (post.wip) {
 			// @wip represents that the post has 'wip' attribute
