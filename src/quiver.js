@@ -4,8 +4,8 @@ const path = require('path');
 const FILE_META = 'meta.json';
 const FILE_CONTENT = 'content.json';
 const FILE_ESA = 'esa.json';
-const QUIVER_NOTE_EXTENSION = ".qvnote";
-const QUIVER_BOOK_EXTENSION = ".qvnotebook";
+const QUIVER_NOTE_EXTENSION = "qvnote";
+const QUIVER_BOOK_EXTENSION = "qvnotebook";
 
 class QuiverNote {
 	/* Fields:
@@ -20,7 +20,7 @@ class QuiverNote {
 
 	constructor(book, uuid) {
 		this.book = book;
-		const noteDir = path.join(this.book.dir, uuid + QUIVER_NOTE_EXTENSION);
+		const noteDir = path.join(this.book.dir, uuid + '.' + QUIVER_NOTE_EXTENSION);
 		const metaFile = path.join(noteDir, FILE_META);
 		const contentFile = path.join(noteDir, FILE_CONTENT);
 		const esaFile = path.join(noteDir, FILE_ESA);
@@ -103,7 +103,7 @@ class QuiverNote {
 	}
 
 	save(makeDir = false) {
-		const noteDir = path.join(this.book.dir, this.meta.uuid + QUIVER_NOTE_EXTENSION);
+		const noteDir = path.join(this.book.dir, this.meta.uuid + '.' + QUIVER_NOTE_EXTENSION);
 		const metaFile = path.join(noteDir, FILE_META);
 		const contentFile = path.join(noteDir, FILE_CONTENT);
 		const esaFile = path.join(noteDir, FILE_ESA);
