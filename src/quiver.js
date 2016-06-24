@@ -49,6 +49,7 @@ class QuiverNote {
 		const note = new QuiverNote(book, uuid);
 		if (note.esa) throw new Error('Note already exists');
 
+		// templates
 		note.meta = {
 			created_at: Date.now() / 1000 | 0,
 			tags: [],

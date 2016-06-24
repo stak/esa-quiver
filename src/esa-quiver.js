@@ -11,6 +11,8 @@ function makeMd5Uuid(src) {
   const md5hash = crypto.createHash('md5');
   md5hash.update(src, 'binary');
   const md5str = md5hash.digest('hex').toUpperCase();
+
+	// generate UUID like hyphened string in the form 8-4-4-4-12
 	return md5str.slice(0, 8) + '-' +
 	       md5str.slice(8, 12) + '-' +
 	       md5str.slice(12, 16) + '-' +
@@ -44,23 +46,21 @@ export default class EsaQuiver {
 	fetch(page = 1) {
 		return new Promise((resolve, reject) => {
 			this.esa.api.posts({per_page: ESA_PAGE_PER_REQUEST, page: page}, (err, res) => {
-				if (err) {
-					reject(err);
-					return;
-				}
+				if (err) return reject(err);
 
-				let allSyncFlag = true;
+				let syncContinue = true;
 				res.body.posts.forEach(post => {
 					if (this.postToNote_(post)) {
 						console.log(`Sync: ${post.full_name}`);
 					} else {
 						console.log(`Pass: ${post.full_name}`);
-						allSyncFlag = false;
+						syncContinue = false;
 					}
 				});
-				if (allSyncFlag && res.body.next_page) {
-					this.fetch(res.body.next_page).then(resolve)
-					                              .catch(reject);
+				if (syncContinue && res.body.next_page) {
+					// async recursion to fetch all updated pages
+					this.fetch(res.body.next_page)
+					    .then(resolve, reject);
 				} else {
 					resolve();
 				}
@@ -77,8 +77,9 @@ export default class EsaQuiver {
 		let tags = [tag];
 
 		if (post.category) {
+			// 'a/b/c' => ['a', 'a/b', 'a/b/c']
 			post.category.split('/').forEach(category => {
-				tag = tag + '/' + category;
+				tag += '/' + category;
 				tags.push(tag);
 			});
 		}
@@ -86,6 +87,7 @@ export default class EsaQuiver {
 		// TODO: post.tags
 
 		if (post.wip) {
+			// @wip represents that the post has 'wip' attribute
 			tags.push(this.tagPrefix + '@' + ESA_TAG_ATTR_WIP);
 		}
 
@@ -97,12 +99,13 @@ export default class EsaQuiver {
 		const postId = ('00000' + post.number).slice(-6);
 		const uuidSrc = `${ESA_UUID_PREFIX}${this.esa.team}-${bookUuid}-${postId}`;
 		const uuid = makeMd5Uuid(uuidSrc);
+
 		const note = this.book.getNote(uuid) ?
 		             this.book.getNote(uuid):
 		             this.book.addNote(uuid);
-
 		if (!note) throw new Error('Failed to get quiver notes.');
 
+		// note is new or note has been updated
 		if (!note.esa || note.esa.revision_number < post.revision_number) {
 			note.setEsa(post);
 			note.setTitle(post.full_name);
