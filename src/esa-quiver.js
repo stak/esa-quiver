@@ -5,6 +5,7 @@ import QuiverBook from './quiver';
 const ESA_UUID_PREFIX = 'esa-';
 const ESA_TAG_DEFAULT_PREFIX = '${TEAM}';
 const ESA_TAG_ATTR_WIP = 'wip';
+const ESA_PAGE_PER_REQUEST = 100;
 
 function makeMd5Uuid(src) {
   const md5hash = crypto.createHash('md5');
@@ -40,14 +41,29 @@ export default class EsaQuiver {
 		}
 	}
 
-	fetch() {
-		this.esa.api.posts({per_page: 100, page: 1}, (err, res) => {
-			if (err) {
-				console.log(err);
-				return;
-			}
-			res.body.posts.forEach(post => {
-				this.postToNote_(post);
+	fetch(page = 1) {
+		return new Promise((resolve, reject) => {
+			this.esa.api.posts({per_page: ESA_PAGE_PER_REQUEST, page: page}, (err, res) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+
+				let allSyncFlag = true;
+				res.body.posts.forEach(post => {
+					if (this.postToNote_(post)) {
+						console.log(`Sync: ${post.full_name}`);
+					} else {
+						console.log(`Pass: ${post.full_name}`);
+						allSyncFlag = false;
+					}
+				});
+				if (allSyncFlag && res.body.next_page) {
+					this.fetch(res.body.next_page).then(resolve)
+					                              .catch(reject);
+				} else {
+					resolve();
+				}
 			});
 		});
 	}
@@ -94,10 +110,9 @@ export default class EsaQuiver {
 			note.setTags(this.constructNoteTags_(post));
 
 			note.save();
-
-			console.log(`Sync: ${post.full_name}`);
+			return true;
 		} else {
-			console.log(`Pass: ${post.full_name}`);
+			return false;
 		}
 	}
 

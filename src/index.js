@@ -12,4 +12,4 @@ if (!app) {
 	process.exit(1);
 }
 
-app.fetch();
+app.fetch().then(() => console.log('DONE'));
