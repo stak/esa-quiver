@@ -76,22 +76,43 @@ export default class EsaQuiver {
 	}
 
 	push() {
+		const promises = this.collectNotesToPush_(this.book.getAllNotes());
+
+		return new Promise((resolve, reject) => {
+			Promise.all(promises).then(results => {
+				results.forEach(res => {
+					if (this.postToNote_(res.body)) {
+						console.log(`Push: ${res.body.full_name}`);
+					} else {
+						console.log(`Error: ${res.body.full_name}`);
+					}
+				});
+				resolve();
+			}).catch(reject);
+		});
+	}
+
+	noteToPostParams_(note) {
+		const titleObj = this.splitNoteTitle_(note.meta.title);
+		return {
+			post: {
+				name: titleObj.name,
+				tags: titleObj.tags,
+				category: titleObj.category,
+				body_md: note.content.cells[0].data,
+				wip: note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_WIP),
+				message: 'Updated by Quiver.' +
+									(note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_NOTICE) ?
+									 '' : ESA_MSG_SKIP_NOTICE)
+			}
+		};
+	}
+
+	collectNotesToPush_(notes) {
 		const promises = [];
 
-		this.book.getAllNotes().forEach(note => {
-			const titleObj = this.splitNoteTitle_(note.meta.title);
-			const params = {
-				post: {
-					name: titleObj.name,
-					tags: titleObj.tags,
-					category: titleObj.category,
-					body_md: note.content.cells[0].data,
-					wip: note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_WIP),
-					message: 'Updated by Quiver.' +
-					         note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_NOTICE) ?
-					         '' : ESA_MSG_SKIP_NOTICE
-				}
-			};
+		notes.forEach(note => {
+			const params = this.noteToPostParams_(note);
 
 			if (note.esa) {
 				const esaTime = Date.parse(note.esa.updated_at) / 1000 | 0;
@@ -119,18 +140,7 @@ export default class EsaQuiver {
 			}
 		});
 
-		return new Promise((resolve, reject) => {
-			Promise.all(promises).then(results => {
-				results.forEach(res => {
-					if (this.postToNote_(res.body)) {
-						console.log(`Push: ${res.body.full_name}`);
-					} else {
-						console.log(`Error: ${res.body.full_name}`);
-					}
-				});
-				resolve();
-			}).catch(reject);
-		});
+		return promises;
 	}
 
 	constructNoteTags_(post) {
