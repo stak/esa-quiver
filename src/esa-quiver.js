@@ -81,11 +81,24 @@ export default class EsaQuiver {
 		return new Promise((resolve, reject) => {
 			Promise.all(promises).then(results => {
 				results.forEach(res => {
+					let eventName;
+					const isMerged = res.body.revision_number !== res.note.esa.revision_number + 1;
+
 					if (this.postToNote_(res.body)) {
-						console.log(`Push: ${res.body.full_name}`);
+						if (!res.note.esa) {
+							res.note.remove();
+							eventName = 'Create';
+						} else if (res.body.overlapped) {
+							eventName = 'Conflict';
+						} else if (isMerged) {
+							eventName = 'Merged';
+						} else {
+							eventName = 'Push';
+						}
 					} else {
-						console.log(`Error: ${res.body.full_name}`);
+						eventName = 'Error';
 					}
+					console.log(`${eventName}: ${res.body.full_name}`);
 				});
 				resolve();
 			}).catch(reject);
@@ -126,6 +139,7 @@ export default class EsaQuiver {
 					promises.push(new Promise((resolve, reject) => {
 						this.esa.api.updatePost(note.esa.number, params, (err, res) => {
 							if (err) return reject(err);
+							res.note = note;
 							resolve(res);
 						});
 					}));
@@ -134,6 +148,7 @@ export default class EsaQuiver {
 				promises.push(new Promise((resolve, reject) => {
 					this.esa.api.createPost(params, (err, res) => {
 						if (err) return reject(err);
+						res.note = note;
 						resolve(res);
 					});
 				}));
