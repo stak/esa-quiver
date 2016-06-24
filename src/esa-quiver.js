@@ -46,13 +46,17 @@ export default class EsaQuiver {
 
 	fetch(page = 1) {
 		return new Promise((resolve, reject) => {
-			this.esa.api.posts({per_page: ESA_PAGE_PER_REQUEST, page: page}, (err, res) => {
+			const params = {
+				per_page: ESA_PAGE_PER_REQUEST,
+				page: page
+			};
+			this.esa.api.posts(params, (err, res) => {
 				if (err) return reject(err);
 
 				let syncContinue = true;
 				res.body.posts.forEach(post => {
 					if (this.postToNote_(post)) {
-						console.log(`Sync: ${post.full_name}`);
+						console.log(`Fetch: ${post.full_name}`);
 					} else {
 						console.log(`Pass: ${post.full_name}`);
 						syncContinue = false;
