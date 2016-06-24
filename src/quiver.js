@@ -106,6 +106,10 @@ class QuiverNote {
 		return true;
 	}
 
+	hasTag(target) {
+		return this.meta.tags.some(tag => tag === target);
+	}
+
 	save(makeDir = false) {
 		const noteDir = path.join(this.book.dir, this.meta.uuid + '.' + QUIVER_NOTE_EXTENSION);
 		const metaFile = path.join(noteDir, FILE_META);

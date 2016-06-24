@@ -84,7 +84,7 @@ export default class EsaQuiver {
 					tags: titleObj.tags,
 					category: titleObj.category,
 					body_md: note.content.cells[0].data,
-					wip: note.meta.tags.some(tag => tag === this.tagPrefix + '@' + ESA_TAG_ATTR_WIP),
+					wip: note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_WIP),
 					message: 'Updated by Quiver'
 				}
 			};
