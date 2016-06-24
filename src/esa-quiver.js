@@ -29,9 +29,10 @@ export default class EsaQuiver {
 		});
 		this.book = QuiverBook.open(config.quiverDir);
 
-		this.tagPrefix = (config.tagPrefix ?
+		this.tagPrefix = (typeof config.tagPrefix === 'string' ?
 		                 config.tagPrefix:
-		                 ESA_TAG_DEFAULT_PREFIX).replace('${TEAM}', this.esa.team);
+		                 ESA_TAG_DEFAULT_PREFIX)
+		                 .replace('${TEAM}', this.esa.team);
 	}
 
 	static init(config) {
