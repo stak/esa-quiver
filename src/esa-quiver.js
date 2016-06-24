@@ -5,7 +5,9 @@ import QuiverBook from './quiver';
 const ESA_UUID_PREFIX = 'esa-';
 const ESA_TAG_DEFAULT_PREFIX = '${TEAM}';
 const ESA_TAG_ATTR_WIP = 'wip';
+const ESA_TAG_ATTR_NOTICE = 'notice';
 const ESA_PAGE_PER_REQUEST = 100;
+const ESA_MSG_SKIP_NOTICE = ' [skip notice]';
 
 function makeMd5Uuid(src) {
   const md5hash = crypto.createHash('md5');
@@ -85,7 +87,9 @@ export default class EsaQuiver {
 					category: titleObj.category,
 					body_md: note.content.cells[0].data,
 					wip: note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_WIP),
-					message: 'Updated by Quiver'
+					message: 'Updated by Quiver.' +
+					         note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_NOTICE) ?
+					         '' : ESA_MSG_SKIP_NOTICE
 				}
 			};
 
