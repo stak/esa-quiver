@@ -13,6 +13,15 @@ if (!app) {
 	process.exit(1);
 }
 
+const cmd = process.argv[2] || "help";
+switch (cmd.toLowerCase()) {
+	case "fetch":
+	case "pull":
+	case "clone":
+	case "push":
+	case "help":
+}
+
 // app.fetch().then(() => console.log('DONE'));
 
 app.push().then(() => {
