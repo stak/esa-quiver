@@ -111,6 +111,12 @@ class QuiverNote {
 		return this.meta.tags.some(tag => tag === target);
 	}
 
+	isUpdated() {
+		const esaTime = Date.parse(this.esa.updated_at) / 1000 | 0;
+		const metaTime = this.meta.updated_at;
+		return esaTime !== metaTime;
+	}
+
 	save(makeDir = false) {
 		const noteDir = path.join(this.book.dir, this.meta.uuid + '.' + QUIVER_NOTE_EXTENSION);
 		const metaFile = path.join(noteDir, FILE_META);

@@ -127,23 +127,20 @@ export default class EsaQuiver {
 		notes.forEach(note => {
 			const params = this.noteToPostParams_(note);
 
-			if (note.esa) {
-				const esaTime = Date.parse(note.esa.updated_at) / 1000 | 0;
-				const metaTime = note.meta.updated_at;
-				if (esaTime !== metaTime) {
-					params.post.original_revision = {
-						body_md: note.esa.body_md,
-						number: note.esa.number,
-						user: note.esa.updated_by.screen_name
-					};
-					promises.push(new Promise((resolve, reject) => {
-						this.esa.api.updatePost(note.esa.number, params, (err, res) => {
-							if (err) return reject(err);
-							res.note = note;
-							resolve(res);
-						});
-					}));
-				}
+			if (note.esa && note.isUpdated()) {
+				// set original_revision to enable server side merge
+				params.post.original_revision = {
+					body_md: note.esa.body_md,
+					number: note.esa.number,
+					user: note.esa.updated_by.screen_name
+				};
+				promises.push(new Promise((resolve, reject) => {
+					this.esa.api.updatePost(note.esa.number, params, (err, res) => {
+						if (err) return reject(err);
+						res.note = note;
+						resolve(res);
+					});
+				}));
 			} else {
 				promises.push(new Promise((resolve, reject) => {
 					this.esa.api.createPost(params, (err, res) => {
