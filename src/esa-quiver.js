@@ -203,7 +203,7 @@ export default class EsaQuiver {
 		};
 	}
 
-	postToNote_(post) {
+	getNoteFromPost_(post) {
 		const bookUuid = this.book.uuid.split('-')[0];
 		const postId = ('00000' + post.number).slice(-6);
 		const uuidSrc = `${ESA_UUID_PREFIX}${this.esa.team}-${bookUuid}-${postId}`;
@@ -211,18 +211,10 @@ export default class EsaQuiver {
 
 		const note = this.book.getNote(uuid) ?
 		             this.book.getNote(uuid):
-		             this.book.addNote(uuid);
-		if (!note) throw new Error('Failed to get quiver notes.');
+		             this.book.newNote(uuid);
+		return note;
+	}
 
-		// note is new or note has been updated
-		if (!note.esa || note.esa.revision_number < post.revision_number) {
-			note.setEsa(post);
-			note.setTitle(post.full_name);
-			note.setBody(post.body_md);
-			note.setTags(this.constructNoteTags_(post));
-
-			note.save();
-			return true;
 		} else {
 			return false;
 		}

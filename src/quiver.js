@@ -71,9 +71,6 @@ class QuiverNote {
 		};
 		note.esa = null;
 
-		if (!note.save(true)) {
-			throw new Error('Failed to create the note dir.');
-		}
 		return note;
 	}
 
@@ -189,7 +186,7 @@ export default class QuiverBook {
 		return notes;
 	}
 
-	addNote(noteUuid) {
+	newNote(noteUuid) {
 		try {
 			const note = QuiverNote.create(this, noteUuid);
 			return note;
