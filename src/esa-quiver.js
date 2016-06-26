@@ -9,6 +9,13 @@ const ESA_TAG_ATTR_NOTICE = 'notice';
 const ESA_PAGE_PER_REQUEST = 100;
 const ESA_MSG_SKIP_NOTICE = ' [skip notice]';
 
+const PostState = {
+	LATEST: Symbol('latest'),
+	NEW: Symbol('new'),
+	UPDATE: Symbol('update'),
+	BOTH_UPDATED: Symbol('both')
+};
+
 function makeMd5Uuid(src) {
   const md5hash = crypto.createHash('md5');
   md5hash.update(src, 'binary');
@@ -46,7 +53,7 @@ export default class EsaQuiver {
 		}
 	}
 
-	fetch(page = 1) {
+	fetch(page = 1, merge = false) {
 		return new Promise((resolve, reject) => {
 			const params = {
 				per_page: ESA_PAGE_PER_REQUEST,
@@ -57,16 +64,35 @@ export default class EsaQuiver {
 
 				let syncContinue = true;
 				res.body.posts.forEach(post => {
-					if (this.postToNote_(post)) {
-						console.log(`Fetch: ${post.full_name}`);
-					} else {
-						console.log(`Pass: ${post.full_name}`);
-						syncContinue = false;
+					switch (this.getPostState_(post)) {
+						case PostState.LATEST:
+							console.log(`Pass: ${post.full_name}`);
+							syncContinue = false;
+							break;
+						case PostState.NEW:
+							console.log(`New: ${post.full_name}`);
+							this.savePost_(post);
+							break;
+						case PostState.UPDATE:
+							console.log(`Update: ${post.full_name}`);
+							this.savePost_(post);
+							break;
+						case PostState.BOTH_UPDATED:
+							if (merge) {
+								console.log(`Merge: ${post.full_name}`);
+								// TODO: merge
+							} else {
+								console.log(`Skip: ${post.full_name}`);
+							}
+							break;
+						default:
+							reject('Unknown PostState');
+							break;
 					}
 				});
 				if (syncContinue && res.body.next_page) {
 					// async recursion to fetch all updated pages
-					this.fetch(res.body.next_page)
+					this.fetch(res.body.next_page, merge)
 					    .then(resolve, reject);
 				} else {
 					resolve();
@@ -81,24 +107,37 @@ export default class EsaQuiver {
 		return new Promise((resolve, reject) => {
 			Promise.all(promises).then(results => {
 				results.forEach(res => {
+					const post = res.body;
+					const note = res.note;
 					let eventName;
-					const isMerged = res.body.revision_number !== res.note.esa.revision_number + 1;
+					const isMerged = post.revision_number !== note.esa.revision_number + 1;
 
-					if (this.postToNote_(res.body)) {
-						if (!res.note.esa) {
-							res.note.remove();
-							eventName = 'Create';
-						} else if (res.body.overlapped) {
-							eventName = 'Conflict';
-						} else if (isMerged) {
-							eventName = 'Merged';
-						} else {
-							eventName = 'Push';
-						}
-					} else {
-						eventName = 'Error';
+					switch (this.getPostState_(post)) {
+						case PostState.NEW:
+								this.savePost_(post);
+								note.remove();
+								eventName = 'Create';
+								break;
+						case PostState.BOTH_UPDATED:
+							this.savePost_(post);
+
+							if (post.overlapped) {
+								eventName = 'Conflict';
+							} else if (isMerged) {
+								eventName = 'Merged';
+							} else {
+								eventName = 'Push';
+							}
+							break;
+						case PostState.LATEST:
+						case PostState.UPDATE:
+							reject('Push failed');
+							break;
+						default:
+							reject('Unknown PostState');
+							break;
 					}
-					console.log(`${eventName}: ${res.body.full_name}`);
+					console.log(`${eventName}: ${post.full_name}`);
 				});
 				resolve();
 			}).catch(reject);
@@ -215,9 +254,30 @@ export default class EsaQuiver {
 		return note;
 	}
 
+	getPostState_(post) {
+		const note = this.getNoteFromPost_(post);
+
+		if (!note.esa) {
+			return PostState.NEW;
+		} else if (note.esa.revision_number < post.revision_number) {
+			if (note.isUpdated()) {
+				return PostState.BOTH_UPDATED;
+			} else {
+				return PostState.UPDATE;
+			}
 		} else {
-			return false;
+			return PostState.LATEST;
 		}
+	}
+
+	savePost_(post) {
+		const note = this.getNoteFromPost_(post);
+
+		note.setEsa(post);
+		note.setTitle(post.full_name);
+		note.setBody(post.body_md);
+		note.setTags(this.constructNoteTags_(post));
+		note.save();
 	}
 
 };
