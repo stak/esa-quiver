@@ -53,6 +53,19 @@ export default class EsaQuiver {
 		}
 	}
 
+	init() {
+		return new Promise((resolve, reject) => {
+			try {
+				this.book.getAllNotes().forEach(note => {
+					note.remove();
+				});
+			} catch (e) {
+				reject(e);
+			}
+			resolve();
+		});
+	}
+
 	fetch(merge = false, page = 1) {
 		return new Promise((resolve, reject) => {
 			const params = {
@@ -71,16 +84,17 @@ export default class EsaQuiver {
 							break;
 						case PostState.NEW:
 							console.log(`New: ${post.full_name}`);
-							this.savePost_(post);
+							this.savePost_(post, true);
 							break;
 						case PostState.UPDATE:
 							console.log(`Update: ${post.full_name}`);
-							this.savePost_(post);
+							this.savePost_(post, false);
 							break;
 						case PostState.BOTH_UPDATED:
 							if (merge) {
-								console.log(`Merge: ${post.full_name}`);
+								console.log(`Overwrite: ${post.full_name}`);
 								// TODO: merge
+								this.savePost_(post, false);
 							} else {
 								console.log(`Skip: ${post.full_name}`);
 							}
@@ -110,23 +124,22 @@ export default class EsaQuiver {
 					const post = res.body;
 					const note = res.note;
 					let eventName;
-					const isMerged = post.revision_number !== note.esa.revision_number + 1;
 
 					switch (this.getPostState_(post)) {
 						case PostState.NEW:
-								this.savePost_(post);
+								this.savePost_(post, true);
 								note.remove();
 								eventName = 'Create';
 								break;
 						case PostState.BOTH_UPDATED:
-							this.savePost_(post);
+							this.savePost_(post, false);
 
 							if (post.overlapped) {
 								eventName = 'Conflict';
-							} else if (isMerged) {
-								eventName = 'Merged';
-							} else {
+							} else if (post.revision_number === note.esa.revision_number + 1) {
 								eventName = 'Push';
+							} else {
+								eventName = 'Merge';
 							}
 							break;
 						case PostState.LATEST:
@@ -166,11 +179,19 @@ export default class EsaQuiver {
 		notes.forEach(note => {
 			const params = this.noteToPostParams_(note);
 
-			if (note.esa && note.isUpdated()) {
+			if (!note.esa) {
+				promises.push(new Promise((resolve, reject) => {
+					this.esa.api.createPost(params, (err, res) => {
+						if (err) return reject(err);
+						res.note = note;
+						resolve(res);
+					});
+				}));
+			} else if (note.isUpdated()) {
 				// set original_revision to enable server side merge
 				params.post.original_revision = {
 					body_md: note.esa.body_md,
-					number: note.esa.number,
+					number: note.esa.revision_number,
 					user: note.esa.updated_by.screen_name
 				};
 				promises.push(new Promise((resolve, reject) => {
@@ -180,15 +201,7 @@ export default class EsaQuiver {
 						resolve(res);
 					});
 				}));
-			} else {
-				promises.push(new Promise((resolve, reject) => {
-					this.esa.api.createPost(params, (err, res) => {
-						if (err) return reject(err);
-						res.note = note;
-						resolve(res);
-					});
-				}));
-			}
+			} 
 		});
 
 		return promises;
@@ -270,14 +283,14 @@ export default class EsaQuiver {
 		}
 	}
 
-	savePost_(post) {
+	savePost_(post, isNewNote) {
 		const note = this.getNoteFromPost_(post);
 
 		note.setEsa(post);
 		note.setTitle(post.full_name);
 		note.setBody(post.body_md);
 		note.setTags(this.constructNoteTags_(post));
-		note.save();
+		note.save(isNewNote);
 	}
 
 };
