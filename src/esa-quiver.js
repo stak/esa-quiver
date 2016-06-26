@@ -6,6 +6,7 @@ const ESA_UUID_PREFIX = 'esa-';
 const ESA_TAG_DEFAULT_PREFIX = '${TEAM}';
 const ESA_TAG_ATTR_WIP = 'wip';
 const ESA_TAG_ATTR_NOTICE = 'notice';
+const ESA_TAG_ATTR_REMOVE = 'remove';
 const ESA_PAGE_PER_REQUEST = 100;
 const ESA_MSG_SKIP_NOTICE = ' [skip notice]';
 
@@ -13,7 +14,8 @@ const PostState = {
 	LATEST: Symbol('latest'),
 	NEW: Symbol('new'),
 	UPDATE: Symbol('update'),
-	BOTH_UPDATED: Symbol('both')
+	BOTH_UPDATED: Symbol('both'),
+	REMOVE: Symbol('remove')
 };
 
 function makeMd5Uuid(src) {
@@ -99,6 +101,7 @@ export default class EsaQuiver {
 								console.log(`Skip: ${post.full_name}`);
 							}
 							break;
+						case PostState.REMOVE:
 						default:
 							reject('Unknown PostState');
 							break;
@@ -142,6 +145,12 @@ export default class EsaQuiver {
 								eventName = 'Merge';
 							}
 							break;
+						case PostState.REMOVE:
+							note.remove();
+
+							eventName = "Delete";
+							post.full_name = note.esa.full_name;
+							break;
 						case PostState.LATEST:
 						case PostState.UPDATE:
 							reject('Push failed');
@@ -182,6 +191,14 @@ export default class EsaQuiver {
 			if (!note.esa) {
 				promises.push(new Promise((resolve, reject) => {
 					this.esa.api.createPost(params, (err, res) => {
+						if (err) return reject(err);
+						res.note = note;
+						resolve(res);
+					});
+				}));
+			} else if (note.hasTag(this.tagPrefix + '@' + ESA_TAG_ATTR_REMOVE)) {
+				promises.push(new Promise((resolve, reject) => {
+					this.esa.api.deletePost(note.esa.number, params, (err, res) => {
 						if (err) return reject(err);
 						res.note = note;
 						resolve(res);
@@ -256,6 +273,7 @@ export default class EsaQuiver {
 	}
 
 	getNoteFromPost_(post) {
+		if (typeof post.number === "undefined") return null;
 		const bookUuid = this.book.uuid.split('-')[0];
 		const postId = ('00000' + post.number).slice(-6);
 		const uuidSrc = `${ESA_UUID_PREFIX}${this.esa.team}-${bookUuid}-${postId}`;
@@ -270,7 +288,9 @@ export default class EsaQuiver {
 	getPostState_(post) {
 		const note = this.getNoteFromPost_(post);
 
-		if (!note.esa) {
+		if (!note) {
+			return PostState.REMOVE;
+		} else if (!note.esa) {
 			return PostState.NEW;
 		} else if (note.esa.revision_number < post.revision_number) {
 			if (note.isUpdated()) {
