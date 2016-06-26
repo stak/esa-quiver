@@ -188,12 +188,12 @@ export default class EsaQuiver {
 	splitNoteTitle_(titleString) {
 		const categoryPart = titleString.split('/');
 		const category = categoryPart.slice(0, -1).join('/');
-		let tagPart = (" " + categoryPart.pop()).split(/\s+#/);
+		let tagPart = (' ' + categoryPart.pop()).split(/\s+#/);
 		const name = tagPart.shift().trim();
 		tagPart = tagPart.map(tag => tag.split(/\s+/)[0]);
 		if (tagPart.length === 0) {
-			// esa api v1 require [""] to remove all tags
-			tagPart = [""];
+			// esa api v1 require [''] to remove all tags
+			tagPart = [''];
 		}
 
 		return {
