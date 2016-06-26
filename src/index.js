@@ -7,7 +7,7 @@ const config = {
 	tagPrefix: ''
 };
 
-const app = EsaQuiver.init(config);
+const app = EsaQuiver.open(config);
 if (!app) {
 	console.error("Failed to initialize EsaQuiver.");
 	process.exit(1);

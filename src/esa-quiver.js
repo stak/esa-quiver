@@ -44,7 +44,7 @@ export default class EsaQuiver {
 		                 .replace('${TEAM}', this.esa.team);
 	}
 
-	static init(config) {
+	static open(config) {
 		const esaQuiver = new EsaQuiver(config);
 		if (esaQuiver.book && config.esaTeam && config.esaToken) {
 			return esaQuiver;
