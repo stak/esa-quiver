@@ -15,23 +15,26 @@ if (!app) {
 
 const cmd = process.argv[2] || "help";
 switch (cmd.toLowerCase()) {
-	case "fetch":
-	case "pull":
-	case "clone":
-	case "push":
+	case "init": // remove all existing notes in local
+		app.init().then(() => console.log("DONE"));
+		break;
+	case "fetch": // fetch from esa.io, but skip if the local note has changes
+		app.fetch().then(() => console.log('DONE'));
+		break;
+	case "pull": // fetch from esa.io, and overwrite even if the local note has changes
+		app.fetch(true).then(() => console.log('DONE'));
+		break;
+	case "push": // push to esa.io; local and remote changes will be merged automatically
+		app.push().then(() => {
+			console.log("DONE");
+		}).catch((err) => {
+			console.log(err);
+		});
+		break;
 	case "help":
+	default:
+		console.log("Usage: esa-quiver <command>\n\n" +
+		            "where <command> is one of:\n" +
+		            "\tinit, fetch, pull, push, help");
+		break;
 }
-
-// app.fetch().then(() => console.log('DONE'));
-
-app.push().then(() => {
-	console.log("DONE");
-}).catch((err) => {
-	console.log("ERR");
-});
-
-/*
-console.log(app.splitNoteTitle_("hoge/img/page #what #is #this"));
-console.log(app.splitNoteTitle_("hoge/img/page #img /#slash"));
-console.log(app.splitNoteTitle_("dir/hoge/abe no haru #kasu #desu a a"));
-*/
