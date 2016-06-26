@@ -53,7 +53,7 @@ export default class EsaQuiver {
 		}
 	}
 
-	fetch(page = 1, merge = false) {
+	fetch(merge = false, page = 1) {
 		return new Promise((resolve, reject) => {
 			const params = {
 				per_page: ESA_PAGE_PER_REQUEST,
@@ -92,7 +92,7 @@ export default class EsaQuiver {
 				});
 				if (syncContinue && res.body.next_page) {
 					// async recursion to fetch all updated pages
-					this.fetch(res.body.next_page, merge)
+					this.fetch(merge, res.body.next_page)
 					    .then(resolve, reject);
 				} else {
 					resolve();
